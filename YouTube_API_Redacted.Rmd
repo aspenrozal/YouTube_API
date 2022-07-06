@@ -1,0 +1,124 @@
+---
+title: "Queer Immaterial Labor - YouTube API"
+author: "Aspen Russell"
+date: "2/15/2022"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: paper
+    highlight: tango
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Installation and Activation
+
+Instructions accessed here: https://cran.r-project.org/web/packages/tuber/vignettes/tuber-ex.html
+
+httpuv: a HTTP and WebSocket server library for R
+
+```{r}
+# install.packages(tuber)
+library(tuber)
+
+# install.packages("httpuv")
+library(httpuv)
+```
+
+### R tubeR
+
+To access YouTube video comments and metadata, you must first create a YouTube developer account and obtain OAuth credentials (basically a way to validate it is you asking for data).
+
+Apply for an account and create credentials here: https://developers.google.com/youtube/v3/getting-started
+
+Once you create an application and then a set of OAuth (like an API key) credentials, you can fill out the tubeR "yt_oauth" function. The first entry is your "client ID." This is visible when editing your web application on the Google Cloud Platform. The second entry is the "client secret" listed in the same place. This process is essentially logging in.
+
+You will have to create a "redirect URI" within the developer console which essentially tells the "yt_oauth" function where to go to finish authentication. If you run into an error, it may be because you are using http instead of https or vice-versa.
+
+It is highly recommended that you store your ID and secret outside of your code and call it in each time you authenticate. 
+
+When you run the "yt_oauth," a new web page on your browser will open asking you to select a Google account to authenticate with. Select the account you created your application under. Then you will have to allow the application you have created to have access to this Google account. Select "continue." 
+
+Once selected, you should receive a success message and can return to RStudio.
+
+```{r}
+yt_oauth()
+```
+
+### YouTube Queries
+
+#### Video Statistics
+
+get_stats: provide metadata about a video based on the ID (if you open a YouTube video, the ID are the letters, symbols, and numbers following the /watch?v=)
+
+```{r}
+
+# Coming Out Video: QOOw2E_qAsE
+get_stats(video_id = "ysF1OH5tieM")
+```
+
+#### Video Details
+
+This is will pull information about the tags, description text, video ID, video title, thumbnail, live broadcast status, language, and category ID.
+
+```{r}
+get_video_details(video_id = "ysF1OH5tieM")
+```
+
+#### Captions
+
+Access the captioning for the video. Most videos will have the automatic captioning provided by Google, but others may have professionally created closed captions. For non-english or older videos, there may be no captioning at all.
+
+```{r}
+get_captions(video_id= "ysF1OH5tieM")
+```
+
+#### Comments
+
+Access the comments posted for the video specified.
+
+```{r}
+get_comment_threads(c(video_id = "ysF1OH5tieM"))
+```
+
+#### Channel Statistics
+
+If you select a YouTube channel, the channel ID is the string of numbers, letters, and symbols following "/channel/."
+
+```{r}
+
+a <- list_channel_resources(filter = c(channel_id = "UCzTKskwIc_-a0cGvCXA848Q"), part="contentDetails")
+
+# Uploaded playlists:
+playlist_id <- a$items[[1]]$contentDetails$relatedPlaylists$uploads
+
+# Get videos on the playlist
+vids <- get_playlist_items(filter= c(playlist_id=playlist_id)) 
+
+# Video ids
+vid_ids <- as.vector(vids$contentDetails.videoId)
+
+# Function to scrape stats for all vids
+get_all_stats <- function(id) {
+  get_stats(id)
+} 
+
+# Get stats and convert results to data frame 
+res <- lapply(vid_ids, get_all_stats)
+res_df <- do.call(rbind, res, get_all_stats)
+# res_df <- do.call(rbind, lapply(res, data.frame))
+
+head(res_df)
+```
+
+#### 
+
+
+
+```{r}
+
+```
